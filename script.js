@@ -1,5 +1,5 @@
 // --- นำ URL จาก Google Apps Script มาใส่ที่นี่ ---
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyfqDXDV5OtmF0MKy839Py00vRUFiLufwGUfNiqI2nbT6v27A1SHaZNUAlkMGs8k2q9Uw/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzfhLif7Eqexkc4clmkGAubE49dv1Xn0vLAVDEG0PZoIRLYT7d5phUBuBJ68SMZznhzAQ/exec';
 
 let repairData = [];
 let currentFilter = 'all';

@@ -128,55 +128,66 @@ function createRepairCard(repair, index) {
 }
 
 function updateRepairCardContent(card, repair) {
-  const statusLabels = {
-    'pending': { label: 'รอดำเนินการ', class: 'status-pending' },
-    'in-progress': { label: 'กำลังซ่อม', class: 'status-in-progress' },
-    'completed': { label: 'เสร็จสิ้น', class: 'status-completed' }
-  };
-  const priorityLabels = { high: '🔴 เร่งด่วน', medium: '🟡 ปานกลาง', low: '🟢 ไม่เร่งด่วน' };
-  const statusInfo = statusLabels[repair.status];
-  const date = new Date(repair.created_at).toLocaleDateString('th-TH', { 
-    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' 
-  });
-  
-  const isConfirming = card.dataset.confirming === 'true';
+    // เพิ่มการตรวจสอบว่ามีข้อมูล repair จริงไหม และมี status ไหม
+    if (!repair || !repair.status) return;
 
-  card.innerHTML = `
-    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2 flex-wrap mb-2">
-          <span class="px-3 py-1 rounded-full text-xs font-medium ${statusInfo.class}">${statusInfo.label}</span>
-          <span class="text-xs text-white/40">${repair.category}</span>
-          <span class="text-xs text-white/40">${priorityLabels[repair.priority]}</span>
-        </div>
-        <h3 class="text-lg font-semibold text-white truncate">${escapeHtml(repair.item_name)}</h3>
-        <p class="text-white/60 text-sm mt-1 line-clamp-2">${escapeHtml(repair.description)}</p>
-        <div class="flex items-center gap-4 mt-3 text-xs text-white/40">
-          <span>📅 ${date}</span>
-          ${repair.contact_name !== '-' ? `<span>👤 ${escapeHtml(repair.contact_name)}</span>` : ''}
-          ${repair.contact_phone !== '-' ? `<span>📞 ${escapeHtml(repair.contact_phone)}</span>` : ''}
-        </div>
-      </div>
-      <div class="flex sm:flex-col gap-2">
-        ${repair.status !== 'completed' ? `
-          <button onclick="updateStatus('${repair.id}', '${repair.status === 'pending' ? 'in-progress' : 'completed'}')"
-            class="px-3 py-2 bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 rounded-lg text-xs transition flex items-center gap-1">
-            ${repair.status === 'pending' ? '🔧 เริ่มซ่อม' : '✅ เสร็จสิ้น'}
-          </button>
-        ` : ''}
-        ${isConfirming ? `
-          <div class="flex gap-1">
-            <button onclick="confirmDelete('${repair.id}')" class="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs transition">ยืนยันลบ</button>
-            <button onclick="cancelDelete('${repair.id}')" class="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs transition">ยกเลิก</button>
+    const statusLabels = {
+        'pending': { label: 'รอดำเนินการ', class: 'status-pending' },
+        'in-progress': { label: 'กำลังซ่อม', class: 'status-in-progress' },
+        'completed': { label: 'เสร็จสิ้น', class: 'status-completed' }
+    };
+
+    // ป้องกัน Error ถ้า status ใน Sheets ไม่ตรงกับที่มีในระบบ
+    const statusInfo = statusLabels[repair.status] || { label: 'ไม่ทราบสถานะ', class: 'bg-slate-500' };
+    
+    const priorityLabels = { high: '🔴 เร่งด่วน', medium: '🟡 ปานกลาง', low: '🟢 ไม่เร่งด่วน' };
+    
+    // ตรวจสอบวันที่ (ถ้าเป็นภาษาไทยมาแล้วใช้ได้เลย ถ้าไม่ใช่ให้แปลง)
+    let displayDate = repair.created_at;
+    if (displayDate.includes('T')) { // ถ้ายังเป็น ISO format
+        displayDate = new Date(repair.created_at).toLocaleDateString('th-TH', { 
+            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+        });
+    }
+
+    const isConfirming = card.dataset.confirming === 'true';
+
+    card.innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 text-left">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap mb-2">
+              <span class="px-3 py-1 rounded-full text-xs font-medium ${statusInfo.class}">${statusInfo.label}</span>
+              <span class="text-xs text-white/40">${repair.category || 'ทั่วไป'}</span>
+              <span class="text-xs text-white/40">${priorityLabels[repair.priority] || '🟡 ปานกลาง'}</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white truncate">${escapeHtml(repair.item_name)}</h3>
+            <p class="text-white/60 text-sm mt-1 line-clamp-2">${escapeHtml(repair.description)}</p>
+            <div class="flex items-center gap-4 mt-3 text-xs text-white/40">
+              <span>📅 ${displayDate}</span>
+              ${repair.contact_name !== '-' ? `<span>👤 ${escapeHtml(repair.contact_name)}</span>` : ''}
+              ${repair.contact_phone !== '-' ? `<span>📞 ${escapeHtml(repair.contact_phone)}</span>` : ''}
+            </div>
           </div>
-        ` : `
-          <button onclick="requestDelete('${repair.id}')" class="px-3 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-lg text-xs transition flex items-center gap-1">
-            🗑️ ลบ
-          </button>
-        `}
-      </div>
-    </div>
-  `;
+          <div class="flex sm:flex-col gap-2">
+            ${repair.status !== 'completed' ? `
+              <button onclick="updateStatus('${repair.id}', '${repair.status === 'pending' ? 'in-progress' : 'completed'}')"
+                class="px-3 py-2 bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 rounded-lg text-xs transition flex items-center gap-1">
+                ${repair.status === 'pending' ? '🔧 เริ่มซ่อม' : '✅ เสร็จสิ้น'}
+              </button>
+            ` : ''}
+            ${isConfirming ? `
+              <div class="flex gap-1">
+                <button onclick="confirmDelete('${repair.id}')" class="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs transition">ยืนยัน</button>
+                <button onclick="cancelDelete('${repair.id}')" class="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs transition">ยกเลิก</button>
+              </div>
+            ` : `
+              <button onclick="requestDelete('${repair.id}')" class="px-3 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-lg text-xs transition flex items-center gap-1">
+                🗑️ ลบ
+              </button>
+            `}
+          </div>
+        </div>
+    `;
 }
 
 // อัปเดตสถานะ

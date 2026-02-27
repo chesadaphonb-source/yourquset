@@ -3,6 +3,24 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzfhLif7Eqexkc4
 
 let repairData = [];
 let currentFilter = 'all';
+// --- ส่วนที่เพิ่มเข้ามา: จัดรูปแบบเบอร์โทร 000-000-0000 ---
+document.addEventListener('DOMContentLoaded', () => {
+    const phoneInput = document.getElementById('contact-phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\D/g, ''); // ลบตัวอักษรที่ไม่ใช่ตัวเลข
+            if (value.length > 10) value = value.slice(0, 10); // จำกัด 10 หลัก
+            
+            let formattedValue = '';
+            if (value.length > 0) {
+                formattedValue = value.substring(0, 3);
+                if (value.length > 3) formattedValue += '-' + value.substring(3, 6);
+                if (value.length > 6) formattedValue += '-' + value.substring(6, 10);
+            }
+            e.target.value = formattedValue;
+        });
+    }
+});
 
 // โหลดข้อมูลครั้งแรก
 document.addEventListener('DOMContentLoaded', loadData);

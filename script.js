@@ -22,9 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// โหลดข้อมูลครั้งแรก
-document.addEventListener('DOMContentLoaded', loadData);
-
 async function loadData() {
   try {
     const response = await fetch(APPS_SCRIPT_URL);

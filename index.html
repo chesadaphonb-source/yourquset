@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="th" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบแจ้งซ่อม</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-auto">
+  <div id="app-wrapper" class="min-h-full w-full">
+    <header class="bg-gradient-to-r from-orange-500 to-amber-500 shadow-2xl">
+      <div class="max-w-6xl mx-auto px-4 py-6">
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          </div>
+          <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-white">ระบบแจ้งซ่อม</h1>
+            <p class="text-white/80 text-sm">แจ้งปัญหาและติดตามสถานะการซ่อม</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white/10 backdrop-blur rounded-2xl p-4 text-center">
+          <div id="stat-total" class="text-3xl font-bold text-white">0</div>
+          <div class="text-white/60 text-sm">ทั้งหมด</div>
+        </div>
+        <div class="bg-yellow-500/20 backdrop-blur rounded-2xl p-4 text-center">
+          <div id="stat-pending" class="text-3xl font-bold text-yellow-400">0</div>
+          <div class="text-yellow-200/60 text-sm">รอดำเนินการ</div>
+        </div>
+        <div class="bg-blue-500/20 backdrop-blur rounded-2xl p-4 text-center">
+          <div id="stat-progress" class="text-3xl font-bold text-blue-400">0</div>
+          <div class="text-blue-200/60 text-sm">กำลังซ่อม</div>
+        </div>
+        <div class="bg-green-500/20 backdrop-blur rounded-2xl p-4 text-center">
+          <div id="stat-completed" class="text-3xl font-bold text-green-400">0</div>
+          <div class="text-green-200/60 text-sm">เสร็จสิ้น</div>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-5 gap-8">
+        <div class="lg:col-span-2">
+          <div class="bg-white/10 backdrop-blur rounded-3xl p-6 shadow-xl border border-white/10">
+            <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+              <span class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+              </span> แจ้งซ่อมใหม่
+            </h2>
+            <form id="repair-form" class="space-y-4">
+              <div>
+                <label class="block text-white/80 text-sm mb-2">ชื่ออุปกรณ์/สิ่งของ *</label> 
+                <input type="text" id="item-name" required class="w-full px-4 py-3 bg-slate-800/50 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="เช่น เครื่องปรับอากาศ, คอมพิวเตอร์">
+              </div>
+              <div>
+                <label class="block text-white/80 text-sm mb-2">หมวดหมู่</label> 
+                <select id="category" class="w-full px-4 py-3 bg-slate-800/50 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-orange-500"> 
+                  <option value="ไฟฟ้า" class="bg-slate-800">🔌 ไฟฟ้า</option> 
+                  <option value="ประปา" class="bg-slate-800">🚿 ประปา</option> 
+                  <option value="เครื่องใช้สำนักงาน" class="bg-slate-800">🖨️ เครื่องใช้สำนักงาน</option> 
+                  <option value="คอมพิวเตอร์/IT" class="bg-slate-800">💻 คอมพิวเตอร์/IT</option> 
+                  <option value="เฟอร์นิเจอร์" class="bg-slate-800">🪑 เฟอร์นิเจอร์</option> 
+                  <option value="อื่นๆ" class="bg-slate-800">📦 อื่นๆ</option> 
+                </select>
+              </div>
+              <div>
+                <label class="block text-white/80 text-sm mb-2">รายละเอียดปัญหา *</label> 
+                <textarea id="description" required rows="3" class="w-full px-4 py-3 bg-slate-800/50 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" placeholder="อธิบายอาการหรือปัญหาที่พบ..."></textarea>
+              </div>
+              <div>
+                <label class="block text-white/80 text-sm mb-2">ความเร่งด่วน</label>
+                <div class="grid grid-cols-3 gap-2">
+                  <label class="cursor-pointer"> 
+                    <input type="radio" name="priority" value="low" class="hidden peer">
+                    <div class="py-2 px-3 text-center rounded-xl border-2 border-green-500/30 text-green-400 peer-checked:bg-green-500 peer-checked:text-white peer-checked:border-green-500 transition text-sm">🟢 ต่ำ</div>
+                  </label> 
+                  <label class="cursor-pointer"> 
+                    <input type="radio" name="priority" value="medium" checked class="hidden peer">
+                    <div class="py-2 px-3 text-center rounded-xl border-2 border-yellow-500/30 text-yellow-400 peer-checked:bg-yellow-500 peer-checked:text-white peer-checked:border-yellow-500 transition text-sm">🟡 ปานกลาง</div>
+                  </label> 
+                  <label class="cursor-pointer"> 
+                    <input type="radio" name="priority" value="high" class="hidden peer">
+                    <div class="py-2 px-3 text-center rounded-xl border-2 border-red-500/30 text-red-400 peer-checked:bg-red-500 peer-checked:text-white peer-checked:border-red-500 transition text-sm">🔴 สูง</div>
+                  </label>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-white/80 text-sm mb-2">ชื่อผู้แจ้ง</label> 
+                  <input type="text" id="contact-name" class="w-full px-4 py-3 bg-slate-800/50 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="ชื่อ-นามสกุล">
+                </div>
+                <div>
+                  <label class="block text-white/80 text-sm mb-2">เบอร์โทร</label> 
+                  <input type="tel" id="contact-phone" class="w-full px-4 py-3 bg-slate-800/50 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="0XX-XXX-XXXX">
+                </div>
+              </div>
+              <button type="submit" id="submit-btn" class="w-full py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-amber-600 transition-all shadow-lg hover:shadow-orange-500/30 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                <span id="submit-btn-text">ส่งคำร้องซ่อม</span> 
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div class="lg:col-span-3">
+          <div class="bg-white/10 backdrop-blur rounded-3xl p-6 shadow-xl border border-white/10">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+                <span class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                </span> รายการแจ้งซ่อม
+              </h2>
+              <div class="flex gap-2 flex-wrap">
+                <button onclick="filterByStatus('all')" class="filter-btn px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white transition" data-status="all">ทั้งหมด</button> 
+                <button onclick="filterByStatus('pending')" class="filter-btn px-3 py-1.5 rounded-lg text-sm bg-white/10 text-white/60 hover:bg-white/20 transition" data-status="pending">รอดำเนินการ</button> 
+                <button onclick="filterByStatus('in-progress')" class="filter-btn px-3 py-1.5 rounded-lg text-sm bg-white/10 text-white/60 hover:bg-white/20 transition" data-status="in-progress">กำลังซ่อม</button> 
+                <button onclick="filterByStatus('completed')" class="filter-btn px-3 py-1.5 rounded-lg text-sm bg-white/10 text-white/60 hover:bg-white/20 transition" data-status="completed">เสร็จสิ้น</button>
+              </div>
+            </div>
+            <div id="repair-list" class="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+              <div class="text-center py-12 text-white/40" id="loading-state">
+                <svg class="w-10 h-10 mx-auto mb-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <p>กำลังโหลดข้อมูล...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="fixed bottom-4 right-4 transform translate-y-20 opacity-0 transition-all duration-300 z-50 pointer-events-none">
+    <div class="bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-2">
+      <span id="toast-message">บันทึกสำเร็จ!</span>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

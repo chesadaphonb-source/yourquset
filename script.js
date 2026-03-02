@@ -108,7 +108,7 @@ function renderList() {
     }
 
     // เรียงจากใหม่ไปเก่า (เช็คกรณีวันที่เป็น String ภาษาไทย)
-    filteredData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    //filteredData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     if (filteredData.length === 0) {
         container.innerHTML = `

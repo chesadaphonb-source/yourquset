@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadData() {
     const container = document.getElementById('repair-list');
     try {
-        const response = await fetch(APPS_SCRIPT_URL);
+        const response = await fetch(`${APPS_SCRIPT_URL}?t=${Date.now()}`);
         const data = await response.json();
         repairData = data;
         updateStats();

@@ -1,15 +1,20 @@
-// --- นำ URL จาก Google Apps Script มาใส่ที่นี่ ---
+// --- 1. ตั้งค่า URL (ใช้ตัวล่าสุดของคุณ) ---
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyjYr2MqNQlK3fE4uOGqhiy5-oG7i7OzKrMftG5RAfTCgj2yxuB09zYyTagji6PHHXePw/exec';
 
 let repairData = [];
 let currentFilter = 'all';
-// --- ส่วนที่เพิ่มเข้ามา: จัดรูปแบบเบอร์โทร 000-000-0000 ---
+
+// --- 2. เริ่มต้นระบบเมื่อโหลดหน้าเว็บ ---
 document.addEventListener('DOMContentLoaded', () => {
+    // ดึงข้อมูลจากฐานข้อมูลทันที
+    loadData();
+
+    // จัดรูปแบบเบอร์โทร 000-000-0000 อัตโนมัติ
     const phoneInput = document.getElementById('contact-phone');
     if (phoneInput) {
         phoneInput.addEventListener('input', function (e) {
-            let value = e.target.value.replace(/\D/g, ''); // ลบตัวอักษรที่ไม่ใช่ตัวเลข
-            if (value.length > 10) value = value.slice(0, 10); // จำกัด 10 หลัก
+            let value = e.target.value.replace(/\D/g, ''); 
+            if (value.length > 10) value = value.slice(0, 10);
             
             let formattedValue = '';
             if (value.length > 0) {
@@ -22,113 +27,110 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// --- 3. ฟังก์ชันดึงข้อมูลจาก Google Sheets ---
 async function loadData() {
-  try {
-    const response = await fetch(APPS_SCRIPT_URL);
-    const data = await response.json();
-    repairData = data;
-    updateStats();
-    renderList();
-  } catch (error) {
-    showToast('เชื่อมต่อฐานข้อมูลล้มเหลว', 'error');
-    console.error(error);
-  }
+    const container = document.getElementById('repair-list');
+    try {
+        const response = await fetch(APPS_SCRIPT_URL);
+        const data = await response.json();
+        repairData = data;
+        updateStats();
+        renderList();
+    } catch (error) {
+        showToast('เชื่อมต่อฐานข้อมูลล้มเหลว', 'error');
+        container.innerHTML = `<div class="text-center py-12 text-red-400">ไม่สามารถโหลดข้อมูลได้ กรุณารีเฟรชหน้าเว็บ</div>`;
+        console.error(error);
+    }
 }
 
-// จัดการ Submit ฟอร์ม
+// --- 4. จัดการส่งฟอร์มแจ้งซ่อม ---
 document.getElementById('repair-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const submitBtn = document.getElementById('submit-btn');
-  const btnText = document.getElementById('submit-btn-text');
-  const originalText = btnText.innerText;
-  
-  submitBtn.disabled = true;
-  btnText.innerText = 'กำลังบันทึก...';
-
-  const newRepair = {
-    item_name: document.getElementById('item-name').value,
-    description: document.getElementById('description').value,
-    category: document.getElementById('category').value,
-    priority: document.querySelector('input[name="priority"]:checked').value,
-    status: 'pending',
-    created_at: new Date().toISOString(),
-    contact_name: document.getElementById('contact-name').value || '-',
-    contact_phone: document.getElementById('contact-phone').value || '-'
-  };
-
-  try {
-    const response = await fetch(`${APPS_SCRIPT_URL}?action=create`, {
-      method: 'POST',
-      body: JSON.stringify(newRepair),
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' } // ใช้ text/plain เลี่ยง CORS Preflight
-    });
+    e.preventDefault();
+    const submitBtn = document.getElementById('submit-btn');
+    const btnText = document.getElementById('submit-btn-text');
+    const originalText = btnText.innerText;
     
-    const result = await response.json();
-    
-    if (result.success) {
-      newRepair.id = result.id;
-      repairData.unshift(newRepair); // เพิ่มเข้าใน array ทันทีไม่ต้องรอโหลดใหม่
-      showToast('ส่งคำร้องซ่อมสำเร็จ!');
-      document.getElementById('repair-form').reset();
-      updateStats();
-      renderList();
-    } else {
-      showToast('เกิดข้อผิดพลาดในการบันทึก', 'error');
+    submitBtn.disabled = true;
+    btnText.innerText = 'กำลังบันทึก...';
+
+    const newRepair = {
+        item_name: document.getElementById('item-name').value,
+        description: document.getElementById('description').value,
+        category: document.getElementById('category').value,
+        priority: document.querySelector('input[name="priority"]:checked').value,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        contact_name: document.getElementById('contact-name').value || '-',
+        contact_phone: document.getElementById('contact-phone').value || '-'
+    };
+
+    try {
+        const response = await fetch(`${APPS_SCRIPT_URL}?action=create`, {
+            method: 'POST',
+            body: JSON.stringify(newRepair),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            newRepair.id = result.id;
+            repairData.unshift(newRepair); 
+            showToast('ส่งคำร้องซ่อมสำเร็จ!');
+            document.getElementById('repair-form').reset();
+            updateStats();
+            renderList();
+        } else {
+            showToast('เกิดข้อผิดพลาดในการบันทึก', 'error');
+        }
+    } catch (error) {
+        showToast('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
     }
-  } catch (error) {
-    showToast('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
-  }
 
-  submitBtn.disabled = false;
-  btnText.innerText = originalText;
+    submitBtn.disabled = false;
+    btnText.innerText = originalText;
 });
 
-// อัปเดตสถิติ
+// --- 5. การแสดงผลและ UI ---
 function updateStats() {
-  document.getElementById('stat-total').textContent = repairData.length;
-  document.getElementById('stat-pending').textContent = repairData.filter(r => r.status === 'pending').length;
-  document.getElementById('stat-progress').textContent = repairData.filter(r => r.status === 'in-progress').length;
-  document.getElementById('stat-completed').textContent = repairData.filter(r => r.status === 'completed').length;
+    document.getElementById('stat-total').textContent = repairData.length;
+    document.getElementById('stat-pending').textContent = repairData.filter(r => r.status === 'pending').length;
+    document.getElementById('stat-progress').textContent = repairData.filter(r => r.status === 'in-progress').length;
+    document.getElementById('stat-completed').textContent = repairData.filter(r => r.status === 'completed').length;
 }
 
-// เรนเดอร์รายการ
 function renderList() {
-  const container = document.getElementById('repair-list');
-  let filteredData = repairData;
-  
-  if (currentFilter !== 'all') {
-    filteredData = repairData.filter(r => r.status === currentFilter);
-  }
+    const container = document.getElementById('repair-list');
+    let filteredData = [...repairData]; // ใช้ Spread operator เพื่อไม่ให้กระทบข้อมูลหลักตอน Sort
+    
+    if (currentFilter !== 'all') {
+        filteredData = filteredData.filter(r => r.status === currentFilter);
+    }
 
-  // เรียงลำดับจากใหม่ไปเก่า
-  filteredData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    // เรียงจากใหม่ไปเก่า (เช็คกรณีวันที่เป็น String ภาษาไทย)
+    filteredData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-  if (filteredData.length === 0) {
-    container.innerHTML = `
-      <div class="text-center py-12 text-white/40">
-        <p>${currentFilter === 'all' ? 'ยังไม่มีรายการแจ้งซ่อม' : 'ไม่มีรายการในหมวดนี้'}</p>
-        <p class="text-sm mt-1">เริ่มแจ้งซ่อมได้เลย!</p>
-      </div>`;
-    return;
-  }
+    if (filteredData.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-12 text-white/40">
+                <p>${currentFilter === 'all' ? 'ยังไม่มีรายการแจ้งซ่อม' : 'ไม่มีรายการในหมวดนี้'}</p>
+                <p class="text-sm mt-1">เริ่มแจ้งซ่อมได้เลย!</p>
+            </div>`;
+        return;
+    }
 
-  container.innerHTML = '';
-  filteredData.forEach((repair, index) => {
-    container.appendChild(createRepairCard(repair, index));
-  });
-}
-
-function createRepairCard(repair, index) {
-  const card = document.createElement('div');
-  card.dataset.id = repair.id;
-  card.className = `bg-white/5 rounded-2xl p-4 border border-white/10 card-hover transition-all duration-300 animate-slide-in priority-${repair.priority}`;
-  card.style.animationDelay = `${index * 0.05}s`;
-  updateRepairCardContent(card, repair);
-  return card;
+    container.innerHTML = '';
+    filteredData.forEach((repair, index) => {
+        const card = document.createElement('div');
+        card.dataset.id = repair.id;
+        card.className = `bg-white/5 rounded-2xl p-4 border border-white/10 card-hover transition-all duration-300 animate-slide-in priority-${repair.priority}`;
+        card.style.animationDelay = `${index * 0.05}s`;
+        updateRepairCardContent(card, repair);
+        container.appendChild(card);
+    });
 }
 
 function updateRepairCardContent(card, repair) {
-    // เพิ่มการตรวจสอบว่ามีข้อมูล repair จริงไหม และมี status ไหม
     if (!repair || !repair.status) return;
 
     const statusLabels = {
@@ -137,14 +139,12 @@ function updateRepairCardContent(card, repair) {
         'completed': { label: 'เสร็จสิ้น', class: 'status-completed' }
     };
 
-    // ป้องกัน Error ถ้า status ใน Sheets ไม่ตรงกับที่มีในระบบ
     const statusInfo = statusLabels[repair.status] || { label: 'ไม่ทราบสถานะ', class: 'bg-slate-500' };
-    
     const priorityLabels = { high: '🔴 เร่งด่วน', medium: '🟡 ปานกลาง', low: '🟢 ไม่เร่งด่วน' };
     
-    // ตรวจสอบวันที่ (ถ้าเป็นภาษาไทยมาแล้วใช้ได้เลย ถ้าไม่ใช่ให้แปลง)
     let displayDate = repair.created_at;
-    if (displayDate.includes('T')) { // ถ้ายังเป็น ISO format
+    // แปลงวันที่เฉพาะถ้ามันเป็นรูปแบบ ISO
+    if (displayDate && displayDate.includes('T')) {
         displayDate = new Date(repair.created_at).toLocaleDateString('th-TH', { 
             day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' 
         });
@@ -190,100 +190,89 @@ function updateRepairCardContent(card, repair) {
     `;
 }
 
-// อัปเดตสถานะ
+// --- 6. ฟังก์ชันจัดการสถานะและการลบ ---
 async function updateStatus(id, newStatus) {
-  const card = document.querySelector(`[data-id="${id}"]`);
-  if (card) card.classList.add('loading-pulse');
-
-  try {
-    await fetch(`${APPS_SCRIPT_URL}?action=update`, {
-      method: 'POST',
-      body: JSON.stringify({ id, status: newStatus }),
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-    });
-    
-    const repair = repairData.find(r => r.id === id);
-    if (repair) repair.status = newStatus;
-    
-    updateStats();
-    renderList();
-    showToast(newStatus === 'completed' ? 'ซ่อมเสร็จสิ้นแล้ว!' : 'เริ่มดำเนินการซ่อมแล้ว!');
-  } catch (error) {
-    showToast('เกิดข้อผิดพลาดในการอัปเดต', 'error');
-  }
-  if (card) card.classList.remove('loading-pulse');
+    const card = document.querySelector(`[data-id="${id}"]`);
+    if (card) card.classList.add('loading-pulse');
+    try {
+        await fetch(`${APPS_SCRIPT_URL}?action=update`, {
+            method: 'POST',
+            body: JSON.stringify({ id, status: newStatus }),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        });
+        const repair = repairData.find(r => r.id === id);
+        if (repair) repair.status = newStatus;
+        updateStats();
+        renderList();
+        showToast(newStatus === 'completed' ? 'ซ่อมเสร็จสิ้นแล้ว!' : 'เริ่มดำเนินการซ่อมแล้ว!');
+    } catch (error) {
+        showToast('เกิดข้อผิดพลาดในการอัปเดต', 'error');
+    }
+    if (card) card.classList.remove('loading-pulse');
 }
 
-// การจัดการการลบ
 function requestDelete(id) {
-  const card = document.querySelector(`[data-id="${id}"]`);
-  if (card) {
-    card.dataset.confirming = 'true';
-    updateRepairCardContent(card, repairData.find(r => r.id === id));
-  }
+    const card = document.querySelector(`[data-id="${id}"]`);
+    if (card) {
+        card.dataset.confirming = 'true';
+        updateRepairCardContent(card, repairData.find(r => r.id === id));
+    }
 }
 
 function cancelDelete(id) {
-  const card = document.querySelector(`[data-id="${id}"]`);
-  if (card) {
-    card.dataset.confirming = 'false';
-    updateRepairCardContent(card, repairData.find(r => r.id === id));
-  }
+    const card = document.querySelector(`[data-id="${id}"]`);
+    if (card) {
+        card.dataset.confirming = 'false';
+        updateRepairCardContent(card, repairData.find(r => r.id === id));
+    }
 }
 
 async function confirmDelete(id) {
-  const card = document.querySelector(`[data-id="${id}"]`);
-  if (card) card.classList.add('loading-pulse');
-
-  try {
-    await fetch(`${APPS_SCRIPT_URL}?action=delete`, {
-      method: 'POST',
-      body: JSON.stringify({ id }),
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-    });
-    
-    repairData = repairData.filter(r => r.id !== id);
-    updateStats();
-    renderList();
-    showToast('ลบรายการสำเร็จ!');
-  } catch (error) {
-    showToast('ลบไม่สำเร็จ กรุณาลองใหม่', 'error');
-    if (card) card.classList.remove('loading-pulse');
-  }
-}
-
-// ระบบ Filter
-function filterByStatus(status) {
-  currentFilter = status;
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    if (btn.dataset.status === status) {
-      btn.className = 'filter-btn px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white transition';
-    } else {
-      btn.className = 'filter-btn px-3 py-1.5 rounded-lg text-sm bg-white/10 text-white/60 hover:bg-white/20 transition';
+    const card = document.querySelector(`[data-id="${id}"]`);
+    if (card) card.classList.add('loading-pulse');
+    try {
+        await fetch(`${APPS_SCRIPT_URL}?action=delete`, {
+            method: 'POST',
+            body: JSON.stringify({ id }),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        });
+        repairData = repairData.filter(r => r.id !== id);
+        updateStats();
+        renderList();
+        showToast('ลบรายการสำเร็จ!');
+    } catch (error) {
+        showToast('ลบไม่สำเร็จ กรุณาลองใหม่', 'error');
     }
-  });
-  renderList();
 }
 
-// แสดง Toast Notification
+// --- 7. ฟังก์ชันเสริม (Filter, Toast, Escape) ---
+function filterByStatus(status) {
+    currentFilter = status;
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.status === status) {
+            btn.className = 'filter-btn px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white transition';
+        } else {
+            btn.className = 'filter-btn px-3 py-1.5 rounded-lg text-sm bg-white/10 text-white/60 hover:bg-white/20 transition';
+        }
+    });
+    renderList();
+}
+
 function showToast(message, type = 'success') {
-  const toast = document.getElementById('toast');
-  const toastBg = toast.querySelector('div');
-  document.getElementById('toast-message').textContent = message;
-  
-  toastBg.className = `${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-2`;
-  toast.classList.remove('translate-y-20', 'opacity-0');
-  toast.classList.add('translate-y-0', 'opacity-100');
-  
-  setTimeout(() => {
-    toast.classList.remove('translate-y-0', 'opacity-100');
-    toast.classList.add('translate-y-20', 'opacity-0');
-  }, 3000);
+    const toast = document.getElementById('toast');
+    const toastBg = toast.querySelector('div');
+    document.getElementById('toast-message').textContent = message;
+    toastBg.className = `${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-2`;
+    toast.classList.remove('translate-y-20', 'opacity-0');
+    toast.classList.add('translate-y-0', 'opacity-100');
+    setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+    }, 3000);
 }
 
-// ป้องกัน XSS Injection
 function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }

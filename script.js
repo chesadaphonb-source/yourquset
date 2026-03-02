@@ -142,7 +142,7 @@ function updateRepairCardContent(card, repair) {
     const statusInfo = statusLabels[repair.status] || { label: 'ไม่ทราบสถานะ', class: 'bg-slate-500' };
     const priorityLabels = { high: '🔴 เร่งด่วน', medium: '🟡 ปานกลาง', low: '🟢 ไม่เร่งด่วน' };
     
-    let displayDate = repair.created_at;
+    let displayDate = repair.created_at || 'ไม่ระบุวันที่';
     const isConfirming = card.dataset.confirming === 'true';
 
     card.innerHTML = `

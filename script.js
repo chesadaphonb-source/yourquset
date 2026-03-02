@@ -143,13 +143,6 @@ function updateRepairCardContent(card, repair) {
     const priorityLabels = { high: '🔴 เร่งด่วน', medium: '🟡 ปานกลาง', low: '🟢 ไม่เร่งด่วน' };
     
     let displayDate = repair.created_at;
-    // แปลงวันที่เฉพาะถ้ามันเป็นรูปแบบ ISO
-    if (displayDate && displayDate.includes('T')) {
-        displayDate = new Date(repair.created_at).toLocaleDateString('th-TH', { 
-            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' 
-        });
-    }
-
     const isConfirming = card.dataset.confirming === 'true';
 
     card.innerHTML = `
